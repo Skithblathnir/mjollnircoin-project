@@ -1,0 +1,4 @@
+mjollnircoin-project
+====================
+
+Mjollnircoin
