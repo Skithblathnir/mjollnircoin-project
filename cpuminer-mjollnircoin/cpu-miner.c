@@ -140,7 +140,7 @@ int longpoll_thr_id = -1;
 int stratum_thr_id = -1;
 struct work_restart *work_restart = NULL;
 static struct stratum_ctx stratum;
-
+int stop_after = -1;
 pthread_mutex_t applog_lock;
 static pthread_mutex_t stats_lock;
 
@@ -197,6 +197,7 @@ Options:\n\
   -c, --config=FILE     load a JSON-format configuration file\n\
   -V, --version         display version information and exit\n\
   -h, --help            display this help text and exit\n\
+  -n, --stop-after=N\n\
 ";
 
 static char const short_options[] =
@@ -206,7 +207,7 @@ static char const short_options[] =
 #ifdef HAVE_SYSLOG_H
 	"S"
 #endif
-	"a:c:Dhp:Px:qr:R:s:t:T:o:u:O:Vmv:";
+	"a:c:Dhp:Px:qr:n:R:s:t:T:o:u:O:Vmv:";
 
 static struct option const options[] = {
 	{ "algo", 1, NULL, 'a' },
@@ -225,6 +226,7 @@ static struct option const options[] = {
 	{ "proxy", 1, NULL, 'x' },
 	{ "quiet", 0, NULL, 'q' },
 	{ "retries", 1, NULL, 'r' },
+	{ "stop-after", 1, NULL, 'n'},
 	{ "retry-pause", 1, NULL, 'R' },
 	{ "scantime", 1, NULL, 's' },
 #ifdef HAVE_SYSLOG_H
@@ -313,12 +315,20 @@ static void share_result(int result, const char *reason)
 	
 	sprintf(s, hashrate >= 1e6 ? "%.0f" : "%.2f", 1e-3 * hashrate);
 
-		applog(LOG_INFO, "accepted: %lu/%lu (%.2f%%), %s khash/s %s",
+	applog(LOG_INFO, "accepted: %lu/%lu (%.2f%%), %s khash/s %s",
 			accepted_count,
 			accepted_count + rejected_count,
 			100. * accepted_count / (accepted_count + rejected_count),
 			s,
 			result ? "(yay!!!)" : "(booooo)");
+
+	if( stop_after > 0 && result ) {
+		stop_after --;
+	}
+
+	if( stop_after == 0 ) {
+		exit(0);
+	}
 
 	if (opt_debug && reason)
 		applog(LOG_DEBUG, "DEBUG: reject reason: %s", reason);
@@ -1111,6 +1121,12 @@ static void parse_arg (int key, char *arg)
 		if (v < 1 || v > 9999)	/* sanity check */
 			show_usage_and_exit(1);
 		opt_fail_pause = v;
+		break;
+	case 'n':
+		v = atoi(arg);
+		if( v < 1 || v > 999999)
+			show_usage_and_exit(1);
+		stop_after = v;
 		break;
 	case 's':
 		v = atoi(arg);
