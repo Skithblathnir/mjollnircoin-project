@@ -1,0 +1,137 @@
+/*
+   Copyright(C) 2011,2014 by Abe developers.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
+   
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Affero General Public License for more details.
+   
+   You should have received a copy of the GNU Affero General Public
+   License along with this program.  If not, see
+   <http://www.gnu.org/licenses/agpl.html>.
+ */
+
+body {
+  box-sizing: border-box;
+  color:#ffffff;
+  background: #212121;
+  font-size: 16px;
+  font-family: 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 10px 0;
+  font-weight: 700;
+  color:#f7f7f7;
+  font-family: 'Lucida Grande', 'Calibri', Helvetica, Arial, sans-serif;
+  letter-spacing: -1px;
+}
+
+h1 {
+  font-size: 36px;
+  font-weight: 700;
+  text-align:center;
+}
+h2 {
+  padding-bottom: 10px;
+  font-size: 32px;
+}
+
+h3 {
+  font-size: 24px;
+}
+
+
+a {
+  text-decoration: none;
+  color: #007edf;
+  text-shadow: none;
+
+  transition: color 0.5s ease;
+  transition: text-shadow 0.5s ease;
+  -webkit-transition: color 0.5s ease;
+  -webkit-transition: text-shadow 0.5s ease;
+  -moz-transition: color 0.5s ease;
+  -moz-transition: text-shadow 0.5s ease;
+  -o-transition: color 0.5s ease;
+  -o-transition: text-shadow 0.5s ease;
+  -ms-transition: color 0.5s ease;
+  -ms-transition: text-shadow 0.5s ease;
+}
+
+a:hover, a:focus {text-decoration: underline;}
+
+
+
+
+
+p {
+  margin: 10px 0 15px 0;
+}
+
+ul, ol, dl {
+  margin-bottom: 15px
+}
+
+ul {
+  list-style: inside;
+  padding-left: 20px;
+}
+
+ol {
+  list-style: decimal inside;
+  padding-left: 20px;
+}
+
+table {
+  border: 1px solid #373737;
+  margin-bottom: 20px;
+  text-align: left;
+ }
+
+th {
+  font-family: 'Lucida Grande', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  padding: 10px;
+  background: #373737;
+  color: #fff;
+ }
+
+td {
+  padding: 10px;
+  border: 1px solid #373737;
+ }
+
+form {
+  padding: 20px;
+  
+  border-radius: 2px;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+
+td, th {
+    font-family: 'Lucida Grande', 'Helvetica Neue',Verdana, Helvetica, sans-serif;
+    margin: 0;
+    padding: 0 1ex;
+}
+td {
+    border-width: 1px;
+    border-style: solid;
+}
+table {
+    border-spacing: 0;
+}
+.shortlink {
+    font-size: smaller;
+}
+.addrhist .escrow .balance {
+    opacity: 0.5; /* standard */
+    filter: alpha(opacity = 50); /* MSIE */
+}

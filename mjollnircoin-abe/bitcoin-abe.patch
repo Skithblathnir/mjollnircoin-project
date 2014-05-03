@@ -1,0 +1,186 @@
+diff --git a/Abe/Chain.py b/Abe/Chain.py
+index 1765f98..68c7b24 100644
+--- a/Abe/Chain.py
++++ b/Abe/Chain.py
+@@ -30,8 +30,8 @@ def create(policy, **kwargs):
+     if policy == "Hirocoin":        return Hirocoin(**kwargs)
+     if policy == "X11":             return X11Chain(**kwargs)
+     if policy == "Bitleu":          return Bitleu(**kwargs)
+-    return Sha256NmcAuxPowChain(**kwargs)
+-
++    #return Sha256NmcAuxPowChain(**kwargs)
++    return Mjollnircoin(**kwargs)
+ 
+ PUBKEY_HASH_LENGTH = 20
+ MAX_MULTISIG_KEYS = 3
+@@ -357,6 +357,20 @@ class X11Chain(Chain):
+         import xcoin_hash
+         return xcoin_hash.getPoWHash(header)
+ 
++class Mjollnircoin(X11Chain):
++    def __init__(chain, **kwargs):
++        chain.name = 'Mjollnircoin'
++        chain.code3 = 'MNR'
++	chain.address_version = '\x32'
++        chain.magic = "\xfb\xc0\xb6\xdb"
++        Chain.__init__(chain, **kwargs)
++
++    datadir_conf_file_name = 'mjollnircoin.conf'
++    #datadir_rpcport = 18320
++    #datadir_p2pport = 18319
++    datadir_rpcport = 8320
++    datadir_p2pport = 8319
++	
+ class Hirocoin(X11Chain):
+     def __init__(chain, **kwargs):
+         chain.name = 'Hirocoin'
+diff --git a/Abe/DataStore.py b/Abe/DataStore.py
+index 0a8bade..d9b4877 100644
+--- a/Abe/DataStore.py
++++ b/Abe/DataStore.py
+@@ -78,6 +78,9 @@ CHAIN_CONFIG = [
+     {"chain":"Anoncoin","code3":"ANC", "address_version":"\u0017", "magic":"\xFA\xCA\xBA\xDA" },
+     {"chain":"Hirocoin"},
+     {"chain":"Bitleu"},
++    {"chain":"Mjollnircoin", "code3":"MNR", "address_version": "\x32", "magic":"\xfb\xc0\xb6\xdb"},
++    # Mjollnircoin Testnet:  "address_version": "\x70", "magic":"\x6d\x6a\x6c\x72"}
++    
+     #{"chain":"",
+     # "code3":"", "address_version":"\x", "magic":""},
+     ]
+@@ -213,6 +216,7 @@ class DataStore(object):
+ 
+         for hex_tx in args.import_tx:
+             chain_name = None
++            print("Trying chain name for hex_tx %s\n", str(hex_tx))
+             if isinstance(hex_tx, dict):
+                 chain_name = hex_tx.get("chain")
+                 hex_tx = hex_tx.get("tx")
+@@ -437,6 +441,7 @@ class DataStore(object):
+                 # standard chains.
+                 dirname = dircfg
+                 chain_id = None
++                print( "Holding standard chain\n")
+ 
+             d = {
+                 "id": store.new_id("datadir"),
+@@ -448,6 +453,7 @@ class DataStore(object):
+                 "conf": conf,
+                 }
+             store.datadirs.append(d)
++            print("store %s\n", d )
+ 
+     def init_chains(store):
+         store.chains_by = lambda: 0
+@@ -495,6 +501,7 @@ class DataStore(object):
+ 
+     def get_default_chain(store):
+         store.log.debug("Falling back to default (Bitcoin) policy.")
++        #return  store.chains_by.id[14]
+         return Chain.create(None)
+ 
+     def get_ddl(store, key):
+@@ -2645,6 +2652,7 @@ store._ddl['txout_approx'],
+                     rpc_hash = get_blockhash(height + 1)
+                 else:
+                     rpc_block = rpc("getblock", rpc_hash)
++
+                     assert rpc_hash == rpc_block['hash']
+ 
+                     prev_hash = \
+@@ -2666,6 +2674,8 @@ store._ddl['txout_approx'],
+                         'height':   height,
+                         }
+ 
++                    s = hash
++
+                     if chain.block_header_hash(chain.serialize_block_header(
+                             block)) != hash:
+                         raise InvalidBlock('block hash mismatch')
+@@ -2684,6 +2694,8 @@ store._ddl['txout_approx'],
+                     store.imported_bytes(block['size'])
+                     rpc_hash = rpc_block.get('nextblockhash')
+ 
++                     
++
+                 height += 1
+ 
+             # Import the memory pool.
+@@ -2854,6 +2866,8 @@ store._ddl['txout_approx'],
+                 # Read this file's initial magic number.
+                 magic = ds.input[0:4]
+ 
++                print("magic: %s\n", magic.encode('hex'))
++
+                 if magic == not_magic:
+                     ds.read_cursor = offset
+                     break
+diff --git a/Abe/genesis_tx.py b/Abe/genesis_tx.py
+index 405f2f5..ada9ef5 100644
+--- a/Abe/genesis_tx.py
++++ b/Abe/genesis_tx.py
+@@ -51,4 +51,7 @@ def get(tx_hash_hex):
+     #if tx_hash_hex == "<HASH>"
+     #    return "<DATA>"
+ 
++    if tx_hash_hex == "a7d28544f9eda4587beffa2f39e0b5250f261695cbed8ef0a525519569386e5b":
++        return "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff330002e7032e30342f32382f3230313420546865206368616e67696e6720636f6c6f7273206f662074686520556e697665727365ffffffff0100f2052a0100000043410415bbddf1fcd4caa58ae23fcd48774b7fe73c86b76dce4b6d580bda008c7eb4e0f879ceca63a0c6df09f567948f08cb512091a6b4a7bc1ad4db602246bfefcd84ac00000000"
++
+     return None
+diff --git a/abe.conf b/abe.conf
+index e7bb6b9..6e87b38 100644
+--- a/abe.conf
++++ b/abe.conf
+@@ -34,8 +34,8 @@
+ #connect-args {"user":"root","db":"abe"}
+ 
+ # SQLite3 example:
+-#dbtype = sqlite3
+-#connect-args = abe.sqlite
++dbtype = sqlite3
++connect-args = mnr.sqlite
+ 
+ # Oracle example:
+ #dbtype=cx_Oracle
+@@ -55,8 +55,8 @@
+ #connect-args {"dsn":"DATABASE=abe;UID=db2inst1;PWD=B!tCo1N","conn_options":{"102":0}}
+ 
+ # Specify port and/or host to serve HTTP instead of FastCGI:
+-#port 2750
+-#host localhost
++port 8080
++host localhost
+ 
+ # Specify no-serve to exit immediately after importing block files:
+ #no-serve
+@@ -107,6 +107,12 @@
+ #datadir += /home/bitcoin/.namecoin
+ #datadir += /home/bitcoin/.novacoin
+ 
++datadir += [{
++	"dirname": "/home/c0ntrol/.mjollnircoin/",
++	"loader": "rpc",
++	"chain":"Mjollnircoin"
++	}]
++
+ # datadir 
+ #datadir += [{
+ #        "dirname": "/home/bitcoin/.bitcoin",
+@@ -280,8 +286,10 @@
+ # Add transactions to the database.  The genesis transaction is
+ # unavailable via RPC and must be specified to enable full loading
+ # over RPC.  See Abe/genesis_tx.py.
+-#import-tx += 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000
+ 
++import-tx += 01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff330002e7032e30342f32382f3230313420546865206368616e67696e6720636f6c6f7273206f662074686520556e697665727365ffffffff0100f2052a0100000043410415bbddf1fcd4caa58ae23fcd48774b7fe73c86b76dce4b6d580bda008c7eb4e0f879ceca63a0c6df09f567948f08cb512091a6b4a7bc1ad4db602246bfefcd84ac00000000
++
++# Add transactions to the database.  The genesis transaction is
+ # Use default-loader=blkfile to force Abe to load data by scanning
+ # blockfiles.  Use default-loader=rpc to force the use of RPC
+ # with a running bitcoind (or *coin daemon).  This requires:
+@@ -308,4 +316,4 @@
+ # "default" to let Abe choose.  The "loader" specified in a "datadir"
+ # entry takes precedence over "default-loader".
+ #
+-#default-loader = default
++default-loader = default
