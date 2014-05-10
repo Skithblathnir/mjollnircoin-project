@@ -34,10 +34,10 @@ def determine_db_dir():
     import os.path
     import platform
     if platform.system() == "Darwin":
-        return os.path.expanduser("~/Library/Application Support/Bitcoin/")
+        return os.path.expanduser("~/Library/Application Support/Mjollnircoin/")
     elif platform.system() == "Windows":
-        return os.path.join(os.environ['APPDATA'], "Bitcoin")
-    return os.path.expanduser("~/.bitcoin")
+        return os.path.join(os.environ['APPDATA'], "Mjollnircoin")
+    return os.path.expanduser("~/.mjollnircoin")
 
 # This function comes from bitcointools, bct-LICENSE.txt.
 def long_hex(bytes):
@@ -53,14 +53,28 @@ def short_hex(bytes):
 NULL_HASH = "\0" * 32
 GENESIS_HASH_PREV = NULL_HASH
 
+def sha256(s):
+    return SHA256.new(s).digest()
+
 def double_sha256(s):
-    return SHA256.new(SHA256.new(s).digest()).digest()
+    return sha256(sha256(s))
+
+def sha3_256(s):
+    import hashlib
+    import sys
+    if sys.version_info < (3, 4):
+        import sha3
+    return hashlib.sha3_256(s).digest()
 
 def pubkey_to_hash(pubkey):
     return RIPEMD160.new(SHA256.new(pubkey).digest()).digest()
 
 def calculate_target(nBits):
-    return (nBits & 0xffffff) << (8 * (((nBits >> 24) & 0xff) - 3))
+    # cf. CBigNum::SetCompact in bignum.h
+    shift = 8 * (((nBits >> 24) & 0xff) - 3)
+    bits = nBits & 0x7fffff
+    sign = -1 if (nBits & 0x800000) else 1
+    return sign * (bits << shift if shift >= 0 else bits >> -shift)
 
 def target_to_difficulty(target):
     return ((1 << 224) - 1) * 1000 / (target + 1) / 1000.0
@@ -100,11 +114,12 @@ def possible_address(string):
 
 def hash_to_address(version, hash):
     vh = version + hash
-    return base58.b58encode(vh + double_sha256(vh)[:4])
+    return base58.b58encode(vh) + double_sha256(vh)[:4]
 
 def decode_check_address(address):
     if possible_address(address):
         version, hash = decode_address(address)
+        print(  "version = %s , hash = %s: %d", str(version), hash.encode('hex'), len(hash))
         if hash_to_address(version, hash) == address:
             return version, hash
     return None, None
