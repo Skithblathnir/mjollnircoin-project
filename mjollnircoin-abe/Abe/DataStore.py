@@ -29,6 +29,7 @@ import logging
 import SqlAbstraction
 
 import Chain
+import heavycoin_hash
 
 # bitcointools -- modified deserialize.py to return raw transaction
 import BCDataStream
@@ -62,6 +63,7 @@ WORK_BITS = 304  # XXX more than necessary.
 CHAIN_CONFIG = [
     {"chain":"Bitcoin"},
     {"chain":"Testnet"},
+    {"chain":"Mjollnircoin"},
     {"chain":"Namecoin"},
     {"chain":"Weeds", "network":"Weedsnet",
      "code3":"WDS", "address_version":"\xf3", "magic":"\xf8\xbf\xb5\xda"},
@@ -78,9 +80,7 @@ CHAIN_CONFIG = [
     {"chain":"Anoncoin","code3":"ANC", "address_version":"\u0017", "magic":"\xFA\xCA\xBA\xDA" },
     {"chain":"Hirocoin"},
     {"chain":"Bitleu"},
-    {"chain":"Mjollnircoin", "code3":"MNR", "address_version": "\x32", "magic":"\xfb\xc0\xb6\xdb"},
-    # Mjollnircoin Testnet:  "address_version": "\x70", "magic":"\x6d\x6a\x6c\x72"}
-    
+    {"chain":"Maxcoin"},
     #{"chain":"",
     # "code3":"", "address_version":"\x", "magic":""},
     ]
@@ -216,11 +216,11 @@ class DataStore(object):
 
         for hex_tx in args.import_tx:
             chain_name = None
-            print("Trying chain name for hex_tx %s\n", str(hex_tx))
             if isinstance(hex_tx, dict):
                 chain_name = hex_tx.get("chain")
                 hex_tx = hex_tx.get("tx")
-            store.maybe_import_binary_tx(chain_name, str(hex_tx).decode('hex'))
+            store.maybe_import_binary_tx('Mjollnircoin', str(hex_tx).decode('hex'))
+	    chain_name = 'Mjollnircoin'
 
         store.default_loader = args.default_loader
 
@@ -441,7 +441,6 @@ class DataStore(object):
                 # standard chains.
                 dirname = dircfg
                 chain_id = None
-                print( "Holding standard chain\n")
 
             d = {
                 "id": store.new_id("datadir"),
@@ -453,7 +452,6 @@ class DataStore(object):
                 "conf": conf,
                 }
             store.datadirs.append(d)
-            print("store %s\n", d )
 
     def init_chains(store):
         store.chains_by = lambda: 0
@@ -501,7 +499,6 @@ class DataStore(object):
 
     def get_default_chain(store):
         store.log.debug("Falling back to default (Bitcoin) policy.")
-        #return  store.chains_by.id[14]
         return Chain.create(None)
 
     def get_ddl(store, key):
@@ -1036,14 +1033,16 @@ store._ddl['txout_approx'],
         for pos in xrange(len(b['transactions'])):
             tx = b['transactions'][pos]
 
+            
+
             if 'hash' not in tx:
                 if chain is None:
                     store.log.debug("Falling back to SHA256 transaction hash")
                     tx['hash'] = util.double_sha256(tx['__data__'])
                 else:
-                    tx['hash'] = chain.transaction_hash(tx['__data__'])
+                    tx['hash'] = chain.transaction_hash( tx['__data__'] )
 
-            tx_hash_array.append(tx['hash'])
+            tx_hash_array.append(tx['hash']) 
             tx['tx_id'] = store.tx_find_id_and_value(tx, pos == 0)
 
             if tx['tx_id']:
@@ -2602,12 +2601,13 @@ store._ddl['txout_approx'],
                     return None
 
             rpc_tx = rpc_tx_hex.decode('hex')
-            tx_hash = rpc_tx_hash.decode('hex')[::-1]
+            tx_hash = rpc_tx_hash.decode('hex') 
 
             computed_tx_hash = chain.transaction_hash(rpc_tx)
-            if tx_hash != computed_tx_hash:
-                #raise InvalidBlock('transaction hash mismatch')
-                store.log.debug('transaction hash mismatch: %r != %r', tx_hash, computed_tx_hash)
+            
+	    if tx_hash != computed_tx_hash:
+                 raise InvalidBlock('transaction hash mismatch %s', tx_hash.encode('hex'))
+                 #store.log.debug('transaction hash mismatch: %r != %r', tx_hash, computed_tx_hash)
 
             tx = chain.parse_transaction(rpc_tx)
             tx['hash'] = tx_hash
@@ -2650,9 +2650,9 @@ store._ddl['txout_approx'],
 
                 if store.offer_existing_block(hash, chain.id):
                     rpc_hash = get_blockhash(height + 1)
+                    print( 'store has existing block')
                 else:
                     rpc_block = rpc("getblock", rpc_hash)
-
                     assert rpc_hash == rpc_block['hash']
 
                     prev_hash = \
@@ -2674,11 +2674,26 @@ store._ddl['txout_approx'],
                         'height':   height,
                         }
 
-                    s = hash
+		    # MNR genesis block	
+	
+                    # block = {
+                    #    'hash':    "00000a44fc2a11bc0f2f4482d46146204dec745ebb751274a0fdcc3757f4302c".decode('hex'),
+                    #    'version':  int(rpc_block['version']),
+                    #    'hashPrev': prev_hash,
+                    #    'hashMerkleRoot': "f89c947af6a1b2be07490beac071c5b1545ad4ebc9312cadd412f2b3e25530c8".decode('hex')[::-1],
+                    #    'nTime':    int("1398818354"),
+                    #    'nBits':    int("1e1fffe0", 16),
+                    #    'nNonce':   int("18528392"),
+                    #    'transactions': [],
+                    #    'size':     int("262"),
+                    #    'height':   int("0"),
+                    #   }
 
+
+                    # FIXME: hash is reversed when loading from rpc
                     if chain.block_header_hash(chain.serialize_block_header(
                             block)) != hash:
-                        raise InvalidBlock('block hash mismatch')
+                        raise InvalidBlock('block hash mismatch , target = %s', hash.encode('hex'),  )
 
                     for rpc_tx_hash in rpc_block['tx']:
                         tx = store.export_tx(tx_hash = str(rpc_tx_hash),
@@ -2693,8 +2708,6 @@ store._ddl['txout_approx'],
                     store.import_block(block, chain = chain)
                     store.imported_bytes(block['size'])
                     rpc_hash = rpc_block.get('nextblockhash')
-
-                     
 
                 height += 1
 
@@ -2717,6 +2730,7 @@ store._ddl['txout_approx'],
 
         except InvalidBlock, e:
             store.log.debug("RPC data not understood: %s", e)
+            raise
             return False
 
         return True
@@ -2865,8 +2879,6 @@ store._ddl['txout_approx'],
                 not_magic = magic
                 # Read this file's initial magic number.
                 magic = ds.input[0:4]
-
-                print("magic: %s\n", magic.encode('hex'))
 
                 if magic == not_magic:
                     ds.read_cursor = offset
