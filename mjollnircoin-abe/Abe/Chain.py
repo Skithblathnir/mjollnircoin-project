@@ -399,8 +399,6 @@ class Mjollnircoin(HeftyChain):
     datadir_conf_file_name = 'mjollnircoin.conf'
     datadir_rpcport = 8320
     datadir_p2pport = 8319
-
- 
 class ScryptJaneChain(Chain):
     def block_header_hash(chain, header):
         import yac_scrypt

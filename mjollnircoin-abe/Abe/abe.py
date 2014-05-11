@@ -39,16 +39,16 @@ import base58
 
 __version__ = version.__version__
 
-ABE_APPNAME = "Abe"
+ABE_APPNAME = "Abe (MNR)"
 ABE_VERSION = __version__
-ABE_URL = 'https://github.com/bitcoin-abe/bitcoin-abe'
+ABE_URL = 'https://github.com/mjollnircoin/mjollnircoin-abe'
 
 COPYRIGHT_YEARS = '2011'
 COPYRIGHT = "Abe developers"
 COPYRIGHT_URL = 'https://github.com/bitcoin-abe'
 
-DONATIONS_BTC = '1PWC7PNHL1SgvZaN7xEtygenKjWobWsCuf'
-DONATIONS_NMC = 'NJ3MSELK1cWnqUa6xhF2wUYAnz3RSrWXcK'
+DONATIONS_BTC = '1G4bLg4ASmDrpHZs6zjaqg3MosMR4rHHxo'
+DONATIONS_NMC = 'MPw3jGzBhmjKS4emrpi8EifFfvSoeHgiV2'
 
 TIME1970 = time.strptime('1970-01-01','%Y-%m-%d')
 EPOCH1970 = calendar.timegm(TIME1970)
@@ -94,7 +94,7 @@ DEFAULT_DECIMALS = 8
 ADDR_PREFIX_RE = re.compile('[1-9A-HJ-NP-Za-km-z]{6,}\\Z')
 HEIGHT_RE = re.compile('(?:0|[1-9][0-9]*)\\Z')
 HASH_PREFIX_RE = re.compile('[0-9a-fA-F]{0,64}\\Z')
-HASH_PREFIX_MIN = 6
+HASH_PREFIX_MIN = 5
 
 NETHASH_HEADER = """\
 blockNumber:          height of last block in interval + 1
@@ -920,8 +920,8 @@ class Abe:
             '<p>Search by address, block number or hash, transaction or'
             ' public key hash, or chain name:</p>\n'
             '<form action="', page['dotdot'], 'search"><p>\n'
-            '<input name="q" size="64" value="', escape(q), '" />'
-            '<button type="submit">Search</button>\n'
+            '<input class="searchbox" name="q" size="64" value="', escape(q), '" />'
+            '<button class="searchbutton" type="submit">Search</button>\n'
             '<br />Address or hash search requires at least the first ',
             HASH_PREFIX_MIN, ' characters.</p></form>\n']
 

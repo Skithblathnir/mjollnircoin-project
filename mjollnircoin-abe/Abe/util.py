@@ -34,10 +34,10 @@ def determine_db_dir():
     import os.path
     import platform
     if platform.system() == "Darwin":
-        return os.path.expanduser("~/Library/Application Support/Mjollnircoin/")
+        return os.path.expanduser("~/Library/Application Support/Bitcoin/")
     elif platform.system() == "Windows":
-        return os.path.join(os.environ['APPDATA'], "Mjollnircoin")
-    return os.path.expanduser("~/.mjollnircoin")
+        return os.path.join(os.environ['APPDATA'], "Bitcoin")
+    return os.path.expanduser("~/.bitcoin")
 
 # This function comes from bitcointools, bct-LICENSE.txt.
 def long_hex(bytes):
@@ -114,12 +114,11 @@ def possible_address(string):
 
 def hash_to_address(version, hash):
     vh = version + hash
-    return base58.b58encode(vh) + double_sha256(vh)[:4]
+    return base58.b58encode(vh + double_sha256(vh)[:4])
 
 def decode_check_address(address):
     if possible_address(address):
         version, hash = decode_address(address)
-        print(  "version = %s , hash = %s: %d", str(version), hash.encode('hex'), len(hash))
         if hash_to_address(version, hash) == address:
             return version, hash
     return None, None

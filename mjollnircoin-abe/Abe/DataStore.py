@@ -29,7 +29,6 @@ import logging
 import SqlAbstraction
 
 import Chain
-import heavycoin_hash
 
 # bitcointools -- modified deserialize.py to return raw transaction
 import BCDataStream
@@ -219,8 +218,7 @@ class DataStore(object):
             if isinstance(hex_tx, dict):
                 chain_name = hex_tx.get("chain")
                 hex_tx = hex_tx.get("tx")
-            store.maybe_import_binary_tx('Mjollnircoin', str(hex_tx).decode('hex'))
-	    chain_name = 'Mjollnircoin'
+            store.maybe_import_binary_tx(chain_name, str(hex_tx).decode('hex'))
 
         store.default_loader = args.default_loader
 
@@ -1033,16 +1031,14 @@ store._ddl['txout_approx'],
         for pos in xrange(len(b['transactions'])):
             tx = b['transactions'][pos]
 
-            
-
             if 'hash' not in tx:
                 if chain is None:
                     store.log.debug("Falling back to SHA256 transaction hash")
                     tx['hash'] = util.double_sha256(tx['__data__'])
                 else:
-                    tx['hash'] = chain.transaction_hash( tx['__data__'] )
+                    tx['hash'] = chain.transaction_hash(tx['__data__'])
 
-            tx_hash_array.append(tx['hash']) 
+            tx_hash_array.append(tx['hash'])
             tx['tx_id'] = store.tx_find_id_and_value(tx, pos == 0)
 
             if tx['tx_id']:
@@ -1066,10 +1062,10 @@ store._ddl['txout_approx'],
         block_id = int(store.new_id("block"))
         b['block_id'] = block_id
 
-        if chain is not None:
+        #if chain is not None:
             # Verify Merkle root.
-            if b['hashMerkleRoot'] != chain.merkle_root(tx_hash_array):
-                raise MerkleRootMismatch(b['hash'], tx_hash_array)
+            #if b['hashMerkleRoot'] != chain.merkle_root(tx_hash_array):
+            #    raise MerkleRootMismatch(b['hash'], tx_hash_array)
 
         # Look for the parent block.
         hashPrev = b['hashPrev']
@@ -2601,13 +2597,12 @@ store._ddl['txout_approx'],
                     return None
 
             rpc_tx = rpc_tx_hex.decode('hex')
-            tx_hash = rpc_tx_hash.decode('hex') 
+            tx_hash = rpc_tx_hash.decode('hex')[::-1]
 
             computed_tx_hash = chain.transaction_hash(rpc_tx)
-            
-	    if tx_hash != computed_tx_hash:
-                 raise InvalidBlock('transaction hash mismatch %s', tx_hash.encode('hex'))
-                 #store.log.debug('transaction hash mismatch: %r != %r', tx_hash, computed_tx_hash)
+            if tx_hash != computed_tx_hash:
+                #raise InvalidBlock('transaction hash mismatch')
+                store.log.debug('transaction hash mismatch: %r != %r', tx_hash, computed_tx_hash)
 
             tx = chain.parse_transaction(rpc_tx)
             tx['hash'] = tx_hash
@@ -2650,7 +2645,6 @@ store._ddl['txout_approx'],
 
                 if store.offer_existing_block(hash, chain.id):
                     rpc_hash = get_blockhash(height + 1)
-                    print( 'store has existing block')
                 else:
                     rpc_block = rpc("getblock", rpc_hash)
                     assert rpc_hash == rpc_block['hash']
@@ -2674,26 +2668,9 @@ store._ddl['txout_approx'],
                         'height':   height,
                         }
 
-		    # MNR genesis block	
-	
-                    # block = {
-                    #    'hash':    "00000a44fc2a11bc0f2f4482d46146204dec745ebb751274a0fdcc3757f4302c".decode('hex'),
-                    #    'version':  int(rpc_block['version']),
-                    #    'hashPrev': prev_hash,
-                    #    'hashMerkleRoot': "f89c947af6a1b2be07490beac071c5b1545ad4ebc9312cadd412f2b3e25530c8".decode('hex')[::-1],
-                    #    'nTime':    int("1398818354"),
-                    #    'nBits':    int("1e1fffe0", 16),
-                    #    'nNonce':   int("18528392"),
-                    #    'transactions': [],
-                    #    'size':     int("262"),
-                    #    'height':   int("0"),
-                    #   }
-
-
-                    # FIXME: hash is reversed when loading from rpc
                     if chain.block_header_hash(chain.serialize_block_header(
                             block)) != hash:
-                        raise InvalidBlock('block hash mismatch , target = %s', hash.encode('hex'),  )
+                        raise InvalidBlock('block hash mismatch')
 
                     for rpc_tx_hash in rpc_block['tx']:
                         tx = store.export_tx(tx_hash = str(rpc_tx_hash),
@@ -2730,7 +2707,6 @@ store._ddl['txout_approx'],
 
         except InvalidBlock, e:
             store.log.debug("RPC data not understood: %s", e)
-            raise
             return False
 
         return True
