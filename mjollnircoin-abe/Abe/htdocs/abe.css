@@ -94,6 +94,7 @@ table {
   border: 1px solid #373737;
   margin-bottom: 20px;
   text-align: left;
+  width:85%;
   font-family: 'Lucida Grande', 'Helvetica Neue', Helvetica, Arial, sans-serif;
  }
 
@@ -139,7 +140,7 @@ table {
 
 
 .searchbox { 
-    background-color: #76a1c2; 
+    background-color: #b6dfff; 
     border: solid 1px #487fa9; 
     outline: none; 
     padding: 2px 2px; 
@@ -152,6 +153,7 @@ table {
 }
 
 .searchbutton {
+    margin-left:4px;
     font-size: 13px;
     font-family:Verdana;
     font-weight:normal;
