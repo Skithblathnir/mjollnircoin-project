@@ -62,7 +62,7 @@ WORK_BITS = 304  # XXX more than necessary.
 CHAIN_CONFIG = [
 #    {"chain":"Bitcoin"},
 #    {"chain":"Testnet"},
-    {"chain":"Mjollnircoin"},
+     {"chain":"Mjollnircoin","code3": "MNR", "address_version": "\x32", "magic": "\xfb\xc0\xb6\xdb" },
 #    {"chain":"Namecoin"},
 #    {"chain":"Weeds", "network":"Weedsnet",
 #     "code3":"WDS", "address_version":"\xf3", "magic":"\xf8\xbf\xb5\xda"},

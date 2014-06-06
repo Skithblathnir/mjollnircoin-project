@@ -22,6 +22,7 @@
 import re
 import base58
 import Crypto.Hash.SHA256 as SHA256
+import heavycoin_hash
 
 try:
     import Crypto.Hash.RIPEMD160 as RIPEMD160
@@ -114,7 +115,7 @@ def possible_address(string):
 
 def hash_to_address(version, hash):
     vh = version + hash
-    return base58.b58encode(vh + double_sha256(vh)[:4])
+    return base58.b58encode( vh + heavycoin_hash.getHash(vh,len(vh))[:4])
 
 def decode_check_address(address):
     if possible_address(address):
